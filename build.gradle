@@ -1,0 +1,82 @@
+plugins {
+    id 'idea'
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id "io.ebean" version "13.11.0"
+}
+
+repositories {
+    maven { url "https://reposilite.appleptr16.com/appleptr16" }
+    maven { url 'https://papermc.io/repo/repository/maven-public/' }
+    maven { url 'https://repo.aikar.co/content/groups/aikar/' }
+    mavenCentral()
+    mavenLocal()
+    maven {
+        name 'CodeMC'
+        url 'https://repo.codemc.org/repository/maven-public/'
+    }
+    maven {
+        name = 'sonatype'
+        url = 'https://oss.sonatype.org/content/groups/public/'
+    }
+}
+
+idea {
+    module {
+        sourceDirs += file("$projectDir/build/classes/java/main")
+        generatedSourceDirs += file("$projectDir/build/classes/java/main")
+    }
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
+project.group groupValue
+project.version versionValue
+
+configurations {
+    configureEach {
+        resolutionStrategy.cacheDynamicVersionsFor 1, 'seconds'
+        resolutionStrategy.cacheChangingModulesFor 1, 'seconds'
+    }
+}
+
+project.ext.ebean_version = '13.10.2'
+// https://search.maven.org/search?q=g:io.ebean
+dependencies {
+    // sql annotation processor
+    annotationProcessor "io.ebean:ebean-querybean:${ebean_version}"
+    annotationProcessor "io.ebean:querybean-generator:${ebean_version}"
+
+    // sqlite connection driver
+    compileOnly 'org.xerial:sqlite-jdbc:3.40.0.0'
+
+    // sql ORM
+    compileOnly "io.ebean:ebean-jackson-mapper:${ebean_version}"
+    compileOnly "io.ebean:ebean-ddl-generator:${ebean_version}"
+    compileOnly "io.ebean:ebean-querybean:${ebean_version}"
+    compileOnly "io.ebean:ebean-sqlite:${ebean_version}"
+
+    // voltksiya
+    compileOnly 'mc.pmc:VoltPluginManager:3.2-SNAPSHOT'
+    compileOnly 'voltskiya.utilities:VoltskiyaUtilities:2.0-SNAPSHOT'
+
+    // minecraft api
+    compileOnly 'io.papermc.paper:paper-api:1.19.2-R0.1-SNAPSHOT'
+
+    // minecraft libraries
+    compileOnly 'de.tr7zw:item-nbt-api-plugin:2.10.0'
+}
+
+shadowJar.classifier ''
+shadowJar {
+    doLast {
+        copy {
+            from jar.getArchiveFile()
+            into file(serverBuildDir)
+        }
+    }
+}
