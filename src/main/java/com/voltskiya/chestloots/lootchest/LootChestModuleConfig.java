@@ -19,21 +19,21 @@ public class LootChestModuleConfig implements IChestGroupConfig {
     }
 
     @Override
-    public double getFastRestockMin() {
+    public double verifyFastRestockMin() {
         return defaultFastRestockMin;
     }
 
     @Override
-    public double getSlowRestockMin() {
+    public double verifySlowRestockMin() {
         return defaultSlowRestockMin;
     }
 
     @Override
-    public int playerCountAtFastRestock() {
+    public int verifyPlayerCountAtFastRestock() {
         return playerCountAtFastRestock;
     }
 
-    public int getPlayersTooCloseToRestock() {
+    public int playersTooCloseToRestock() {
         return playersTooCloseToRestock;
     }
 }

@@ -63,8 +63,38 @@ public class DChestGroup extends Model {
             foundChest = new DChest(location, lootTable);
         }
         foundChest.setGroup(this, transaction);
+
         this.getChests().add(foundChest);
+        this.modifyLootedAt(foundChest);
     }
+
+    private void modifyLootedAt(DChest chestToAdd) {
+        if (chestToAdd.getStatus() != DChestLootStatus.LOOTED) return;
+
+        this.status = DChestLootStatus.LOOTED;
+        Instant chestLootedAt = chestToAdd.getLootedAt();
+        if (chestLootedAt == null) return;
+        boolean shouldUpdate = this.lootedAt == null || chestLootedAt.isBefore(this.getLootedAt());
+        if (shouldUpdate)
+            setLootedAt(chestLootedAt);
+    }
+
+    public Instant getLootedAt() {
+        return this.lootedAt.toInstant();
+    }
+
+    private void setLootedAt(Instant l) {
+        this.lootedAt = Timestamp.from(l);
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public DChestGroupConfig getConfig() {
+        return this.config;
+    }
+
 
     public List<DChest> getChests() {
         return this.chests;
@@ -72,7 +102,7 @@ public class DChestGroup extends Model {
 
     public void setLooted() {
         if (status != DChestLootStatus.LOOTED) {
-            this.lootedAt = Timestamp.from(Instant.now());
+            setLootedAt(Instant.now());
             this.timePassed = 0;
             this.status = DChestLootStatus.LOOTED;
         }
@@ -89,6 +119,12 @@ public class DChestGroup extends Model {
     }
 
     public boolean shouldRestock() {
-        return config.normalizedRestockTime() >= this.timePassed;
+        return config.shouldRestock(this.timePassed);
+    }
+
+
+    public DChestGroup removeAllChests() {
+        this.chests.clear();
+        return this;
     }
 }

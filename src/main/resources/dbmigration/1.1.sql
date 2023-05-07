@@ -1,0 +1,2 @@
+-- apply post alter
+-- not supported: alter table chest_group add constraint uq_chest_group_name unique  (name);

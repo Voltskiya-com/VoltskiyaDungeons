@@ -33,7 +33,7 @@ public class ChestRespawnTask implements Runnable {
     }
 
     private static boolean isTooClose(Location location) {
-        int tooClose = LootChestModuleConfig.get().getPlayersTooCloseToRestock();
+        int tooClose = LootChestModuleConfig.get().playersTooCloseToRestock();
         return !location.getNearbyPlayers(tooClose).isEmpty();
     }
 
@@ -81,17 +81,18 @@ public class ChestRespawnTask implements Runnable {
     }
 
     private void restockGroups(List<DChestGroup> groupsToRestock, Instant restockedAt) {
-        for (DChestGroup group : groupsToRestock) {
-            List<DChest> chests = group.getChests();
-            VoltskiyaPlugin.get().scheduleSyncDelayedTask(() -> {
+        VoltskiyaPlugin.get().scheduleSyncDelayedTask(() -> {
+            for (DChestGroup group : groupsToRestock) {
+                List<DChest> chests = group.getChests();
                 for (DChest chest : chests)
                     if (isTooClose(chest.getLocation())) return;
                 for (DChest chest : chests) {
                     restock(chest, restockedAt);
                 }
+                group.save();
                 Bukkit.getScheduler().runTaskAsynchronously(VoltskiyaPlugin.get(), () -> group.save());
-            });
-        }
+            }
+        });
     }
 
     private void restock(DChest dChest, Instant restockedAt) {

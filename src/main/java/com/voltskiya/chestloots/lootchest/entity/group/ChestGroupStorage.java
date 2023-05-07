@@ -15,10 +15,7 @@ public class ChestGroupStorage {
 
     @NotNull
     public static DChestGroup computeChestGroup(@NotNull String name) {
-        DChestGroup group = new QDChestGroup()
-            .where()
-            .name.eq(name)
-            .findOne();
+        DChestGroup group = findChestGroup(name);
         if (group == null) {
             group = new DChestGroup(name);
             group.save();
@@ -31,5 +28,12 @@ public class ChestGroupStorage {
             .where()
             .status.eq(DChestLootStatus.LOOTED)
             .findList();
+    }
+
+    public static DChestGroup findChestGroup(String name) {
+        return new QDChestGroup()
+            .where()
+            .name.eq(name)
+            .findOne();
     }
 }

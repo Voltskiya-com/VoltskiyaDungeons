@@ -19,8 +19,10 @@ public class ChestStorage {
     @Contract("_,null -> null; _,!null -> !null")
     public static DChest computeChestAt(Location location, String lootTable) {
         DChest chest = findChestAt(location);
-        if (chest == null)
+        if (chest == null) {
+            if (lootTable == null) return null;
             chest = new DChest(location, lootTable);
+        }
         chest.save();
         return chest;
     }

@@ -99,7 +99,14 @@ public class DChest extends Model {
     }
 
     public boolean shouldRestock() {
-        return LootChestModuleConfig.get().normalizedRestockTime() <= this.timePassed;
+        return LootChestModuleConfig.get().shouldRestock(this.timePassed);
     }
 
+    public DChestLootStatus getStatus() {
+        return this.status;
+    }
+
+    public Instant getLootedAt() {
+        return this.lootedAt.toInstant();
+    }
 }
