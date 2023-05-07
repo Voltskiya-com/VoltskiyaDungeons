@@ -5,15 +5,24 @@ import com.voltskiya.chestloots.lootchest.entity.world.DWorldId;
 import com.voltskiya.chestloots.lootchest.entity.world.WorldStorage;
 import java.util.List;
 import org.bukkit.Location;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 public class ChestStorage {
 
     public static void loot(Location location, String lootTable) {
+        @NotNull DChest chest = computeChestAt(location, lootTable);
+        chest.setLooted(lootTable);
+        chest.save();
+    }
+
+    @Contract("_,null -> null; _,!null -> !null")
+    public static DChest computeChestAt(Location location, String lootTable) {
         DChest chest = findChestAt(location);
         if (chest == null)
             chest = new DChest(location, lootTable);
-        chest.setLooted(lootTable);
         chest.save();
+        return chest;
     }
 
     public static void delete(Location location) {

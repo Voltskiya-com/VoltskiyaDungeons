@@ -74,9 +74,8 @@ public class DChest extends Model {
         }
     }
 
-    public void removeGroup(Transaction transaction) {
-        if (this.group == null) return;
-        this.group = null;
+    public void setGroup(DChestGroup group, Transaction transaction) {
+        this.group = group;
         save(transaction);
     }
 
@@ -100,7 +99,7 @@ public class DChest extends Model {
     }
 
     public boolean shouldRestock() {
-        return LootChestModuleConfig.get().getNormalizedRestockTime() <= this.timePassed;
+        return LootChestModuleConfig.get().normalizedRestockTime() <= this.timePassed;
     }
 
 }

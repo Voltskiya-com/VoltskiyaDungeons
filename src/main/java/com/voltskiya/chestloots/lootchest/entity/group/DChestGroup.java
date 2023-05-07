@@ -20,6 +20,7 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import org.bukkit.Location;
+import org.jetbrains.annotations.Nullable;
 
 @Entity
 @Table(name = "chest_group")
@@ -27,7 +28,7 @@ public class DChestGroup extends Model {
 
     @Id
     private UUID uuid;
-    @Column
+    @Column(unique = true)
     private String name;
     @DbJson
     @Column(nullable = false)
@@ -53,13 +54,16 @@ public class DChestGroup extends Model {
         status = DChestLootStatus.NEVER_TOUCHED;
     }
 
-    public void addChest(Location location, String lootTable, Transaction transaction) {
-        boolean alreadyExists = this.chests.stream().anyMatch((c) -> c.getLocation().equals(location));
+    public void addChest(Location location, @Nullable String lootTable, Transaction transaction) {
+        boolean alreadyExists = this.getChests().stream().anyMatch((c) -> c.getLocation().equals(location));
         if (alreadyExists) return;
         DChest foundChest = ChestStorage.findChestAt(location);
-        if (foundChest == null) foundChest = new DChest(location, lootTable);
-        foundChest.removeGroup(transaction);
-        this.chests.add(foundChest);
+        if (foundChest == null) {
+            if (lootTable == null) return;
+            foundChest = new DChest(location, lootTable);
+        }
+        foundChest.setGroup(this, transaction);
+        this.getChests().add(foundChest);
     }
 
     public List<DChest> getChests() {
@@ -80,11 +84,11 @@ public class DChestGroup extends Model {
     }
 
     public DChestGroup passTime(int playerCount, int respawnIntervalTicks) {
-        this.timePassed = config.normalizeTimePassedToPerc(playerCount, respawnIntervalTicks);
+        this.timePassed += config.normalizeTimePassedToPerc(playerCount, respawnIntervalTicks);
         return this;
     }
 
     public boolean shouldRestock() {
-        return config.getNormalizedRestockTime() >= this.timePassed;
+        return config.normalizedRestockTime() >= this.timePassed;
     }
 }

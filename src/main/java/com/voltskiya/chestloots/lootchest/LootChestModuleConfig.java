@@ -29,7 +29,7 @@ public class LootChestModuleConfig implements IChestGroupConfig {
     }
 
     @Override
-    public int getPlayerCountAtFastRestock() {
+    public int playerCountAtFastRestock() {
         return playerCountAtFastRestock;
     }
 

@@ -32,6 +32,11 @@ public class ChestRespawnTask implements Runnable {
         Bukkit.getScheduler().runTaskTimerAsynchronously(VoltskiyaPlugin.get(), ChestRespawnTask::scheduleTask, 0, RESPAWN_INTERVAL);
     }
 
+    private static boolean isTooClose(Location location) {
+        int tooClose = LootChestModuleConfig.get().getPlayersTooCloseToRestock();
+        return !location.getNearbyPlayers(tooClose).isEmpty();
+    }
+
     @NotNull
     private List<DChestGroup> passTimeForGroups() {
         int playerCount = Bukkit.getOnlinePlayers().size();
@@ -79,6 +84,8 @@ public class ChestRespawnTask implements Runnable {
         for (DChestGroup group : groupsToRestock) {
             List<DChest> chests = group.getChests();
             VoltskiyaPlugin.get().scheduleSyncDelayedTask(() -> {
+                for (DChest chest : chests)
+                    if (isTooClose(chest.getLocation())) return;
                 for (DChest chest : chests) {
                     restock(chest, restockedAt);
                 }
@@ -89,13 +96,13 @@ public class ChestRespawnTask implements Runnable {
 
     private void restock(DChest dChest, Instant restockedAt) {
         Location location = dChest.getLocation();
-        int tooClose = LootChestModuleConfig.get().getPlayersTooCloseToRestock();
-        if (!location.getNearbyPlayers(tooClose).isEmpty())
+        if (isTooClose(location)) return;
+        if (!(location.getBlock().getState() instanceof Container chest)) {
+            dChest.delete();
             return;
-        if (location.getBlock().getState() instanceof Container chest) {
-//            chest.getInventory().clear();
-            ChestNBT.setLootTable(chest, dChest.getLootTable());
         }
+        chest.getInventory().clear();
+        ChestNBT.setLootTable(chest, dChest.getLootTable());
         dChest.setRestocked(restockedAt);
     }
 }

@@ -10,7 +10,7 @@ public class ChestGroupStorage {
     public static List<String> listGroupNames() {
         return new QDChestGroup()
             .select(QDChestGroup.alias().name)
-            .findSingleAttribute();
+            .findSingleAttributeList();
     }
 
     @NotNull

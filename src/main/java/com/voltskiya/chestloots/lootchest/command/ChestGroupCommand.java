@@ -22,9 +22,10 @@ import java.util.Comparator;
 import java.util.List;
 import org.apache.commons.lang3.NotImplementedException;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
 
 @CommandAlias("chest_group")
@@ -39,17 +40,15 @@ public class ChestGroupCommand extends BaseCommand {
     }
 
     private static List<BlockState> findChestsInRadius(int radius, Location center) {
-        int originalY = center.getBlockY() - radius;
-        int originalZ = center.getBlockZ() - radius;
-        Location location = center.add(-radius, -radius, -radius);
+        Location location = center.clone().add(-radius, -radius, -radius);
+        int originalY = location.getBlockY();
+        int originalZ = location.getBlockZ();
         World world = location.getWorld();
         List<BlockState> nearbyChests = new ArrayList<>();
         for (int x = -radius; x <= radius; x++) {
             for (int y = -radius; y <= radius; y++) {
                 for (int z = -radius; z <= radius; z++) {
                     BlockState block = world.getBlockState(location);
-                    String lootTable = ChestNBT.getLootTable(block);
-                    if (lootTable == null) continue;
                     nearbyChests.add(block);
 
                     location.add(0, 0, 1);
@@ -75,8 +74,9 @@ public class ChestGroupCommand extends BaseCommand {
         List<BlockState> chests = findChestsInRadius(radius, player.getLocation());
         try (Transaction transaction = DB.beginTransaction()) {
             for (BlockState chest : chests) {
-                DChest chestAt = ChestStorage.findChestAt(chest.getLocation());
-                chestAt.removeGroup(transaction);
+                DChest chestAt = ChestStorage.computeChestAt(chest.getLocation(), ChestNBT.getLootTable(chest));
+                if (chestAt == null) continue;
+                chestAt.setGroup(null, transaction);
             }
             transaction.commit();
         }
@@ -112,15 +112,17 @@ public class ChestGroupCommand extends BaseCommand {
         List<String> chestSummaries = new ArrayList<>(chests.size());
         for (DChest chest : chests) {
             Location location = chest.getLocation();
-            Material material = location.getBlock().getType();
+            Block block = location.getBlock();
+            if (!(block.getState() instanceof Container)) continue;
             String chestSummary = "%s [%s] {%d %d %d} - distance: %.2f ".formatted(
-                material,
+                block.getType(),
                 chest.getLootTable(),
                 location.getBlockX(),
                 location.getBlockY(),
                 location.getBlockZ(),
                 distance(center, location));
             chestSummaries.add(chestSummary);
+
         }
         String summary =
             "The following chests are now in group '%s'\n".formatted(chestGroupName) + String.join("\n", chestSummaries);

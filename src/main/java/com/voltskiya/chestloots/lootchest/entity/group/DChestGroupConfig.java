@@ -7,13 +7,11 @@ import org.jetbrains.annotations.Nullable;
 public class DChestGroupConfig implements IChestGroupConfig {
 
     @Nullable
-    protected Double defaultFastRestockMin;
+    protected Double fastRestockMin;
     @Nullable
-    protected Double defaultSlowRestockMin;
+    protected Double slowRestockMin;
 
     public DChestGroupConfig() {
-        this.defaultFastRestockMin = null;
-        this.defaultSlowRestockMin = null;
     }
 
     private static LootChestModuleConfig getMainConfig() {
@@ -21,17 +19,17 @@ public class DChestGroupConfig implements IChestGroupConfig {
     }
 
     public double getFastRestockMin() {
-        if (defaultFastRestockMin != null) return defaultFastRestockMin;
+        if (fastRestockMin != null) return fastRestockMin;
         return getMainConfig().getFastRestockMin();
     }
 
     public double getSlowRestockMin() {
-        if (defaultSlowRestockMin != null) return defaultSlowRestockMin;
+        if (slowRestockMin != null) return slowRestockMin;
         return getMainConfig().getFastRestockMin();
     }
 
     @Override
-    public int getPlayerCountAtFastRestock() {
-        return getMainConfig().getPlayerCountAtFastRestock();
+    public int playerCountAtFastRestock() {
+        return getMainConfig().playerCountAtFastRestock();
     }
 }
