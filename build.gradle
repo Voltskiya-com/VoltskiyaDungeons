@@ -1,15 +1,15 @@
 plugins {
     id 'java'
-    id "io.ebean" version "13.10.0"
+    id 'io.ebean' version '13.14.0'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 repositories {
-    maven { url "https://reposilite.appleptr16.com/appleptr16" }
     mavenLocal()
     mavenCentral()
     maven { url 'https://papermc.io/repo/repository/maven-public/' }
     maven { url 'https://repo.aikar.co/content/groups/aikar/' }
+    maven { url "https://reposilite.appleptr16.com/appleptr16" }
     maven {
         name 'CodeMC'
         url 'https://repo.codemc.org/repository/maven-public/'
@@ -17,7 +17,7 @@ repositories {
 }
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion.set(JavaLanguageVersion.of(18))
     }
 }
 
@@ -30,32 +30,47 @@ configurations {
         resolutionStrategy.cacheChangingModulesFor 1, 'seconds'
     }
 }
-
-project.ext.ebean_version = '13.11.0'
+configurations {
+    testImplementation.extendsFrom compileOnly
+}
+project.ext.ebean_version = '13.14.1'
 // https://search.maven.org/search?q=g:io.ebean
 dependencies {
-    // sql annotation processor
+    // sql
     annotationProcessor "io.ebean:ebean-querybean:${ebean_version}"
     annotationProcessor "io.ebean:querybean-generator:${ebean_version}"
+    implementation "io.ebean:ebean-querybean:${ebean_version}"
+    implementation "io.ebean:ebean-sqlite:${ebean_version}"
+    // sql driver
+
+    // migration
+    implementation "io.ebean:ebean-ddl-generator:${ebean_version}"
+    implementation 'io.ebean:ebean-migration:13.7.0'
+    compileOnly "org.glassfish.jaxb:jaxb-runtime:2.3.2"
 
     // sqlite connection driver
     implementation 'org.xerial:sqlite-jdbc:3.40.0.0'
 
-    // sql ORM
+    //json
     implementation "io.ebean:ebean-jackson-mapper:${ebean_version}"
-    implementation "io.ebean:ebean-ddl-generator:${ebean_version}"
-    implementation "io.ebean:ebean-querybean:${ebean_version}"
-    implementation "io.ebean:ebean-sqlite:${ebean_version}"
+    implementation "io.ebean:ebean-jackson-jsonnode:${ebean_version}"
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.14.2'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.2'
+
+    // logging
+    compileOnly 'org.apache.logging.log4j:log4j-core:2.20.0'
+    compileOnly 'org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0'
 
     // voltksiya
-    compileOnly 'mc.pmc:VoltPluginManager:3.2-SNAPSHOT'
+    compileOnly 'mc.pmc:voltpluginmanager:3.2-SNAPSHOT'
     compileOnly 'voltskiya.utilities:VoltskiyaUtilities:2.0-SNAPSHOT'
+    compileOnly 'mc.apple:AppleMCUtil:1.0-SNAPSHOT'
 
     // minecraft api
-    compileOnly 'io.papermc.paper:paper-api:1.19.2-R0.1-SNAPSHOT'
+    compileOnly 'io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT'
 
     // minecraft libraries
-    compileOnly 'de.tr7zw:item-nbt-api-plugin:2.10.0'
+    compileOnly 'de.tr7zw:item-nbt-api-plugin:2.11.2'
 }
 ebean {
     debugLevel = 0
@@ -63,8 +78,10 @@ ebean {
 
 shadowJar.classifier ''
 shadowJar {
+    manifest {
+        attributes 'Multi-Release': true
+    }
     mergeServiceFiles()
-    relocate 'org.sqlite', 'com.voltskiya.org.sqlite'
     relocate 'io.ebean', 'com.voltskiya.io.ebean'
     relocate 'io.ebeaninternal', 'com.voltskiya.io.ebean'
     relocate 'io.ebeanservice', 'com.voltskiya.io.ebean'

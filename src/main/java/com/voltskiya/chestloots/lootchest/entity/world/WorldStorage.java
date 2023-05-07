@@ -1,12 +1,14 @@
-package com.voltskiya.chestloots.lootchest.world;
+package com.voltskiya.chestloots.lootchest.entity.world;
 
 import com.google.common.collect.HashBiMap;
 import io.ebean.DB;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.bukkit.Bukkit;
+import org.bukkit.World;
 
-public class WorldApi {
+public class WorldStorage {
 
     private static final Map<UUID, DWorldId> worlds = HashBiMap.create();
 
@@ -14,6 +16,9 @@ public class WorldApi {
         List<DWorldId> queried = DB.find(DWorldId.class).findList();
         for (DWorldId world : queried) {
             worlds.put(world.worldUUID, world);
+        }
+        for (World world : Bukkit.getWorlds()) {
+            getWorld(world.getUID());
         }
     }
 
@@ -24,7 +29,7 @@ public class WorldApi {
         }
         if (world != null) return world;
         world = new DWorldId(worldUUID);
-        DB.insert(world);
+        world.save();
         synchronized (worlds) {
             worlds.put(worldUUID, world);
         }
