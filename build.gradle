@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'io.ebean' version '13.14.0'
+    id 'io.ebean' version '13.17.4'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
@@ -33,29 +33,29 @@ configurations {
 configurations {
     testImplementation.extendsFrom compileOnly
 }
-project.ext.ebean_version = '13.14.1'
+project.ext.ebean_version = '13.17.4'
 // https://search.maven.org/search?q=g:io.ebean
 dependencies {
     // sql
     annotationProcessor "io.ebean:ebean-querybean:${ebean_version}"
     annotationProcessor "io.ebean:querybean-generator:${ebean_version}"
-    implementation "io.ebean:ebean-querybean:${ebean_version}"
-    implementation "io.ebean:ebean-sqlite:${ebean_version}"
+    compileOnly "io.ebean:ebean-querybean:${ebean_version}"
+    compileOnly "io.ebean:ebean-sqlite:${ebean_version}"
     // sql driver
 
     // migration
-    implementation "io.ebean:ebean-ddl-generator:${ebean_version}"
-    implementation 'io.ebean:ebean-migration:13.7.0'
+    compileOnly "io.ebean:ebean-ddl-generator:${ebean_version}"
+    compileOnly 'io.ebean:ebean-migration:13.7.0'
     compileOnly "org.glassfish.jaxb:jaxb-runtime:2.3.2"
 
     // sqlite connection driver
-    implementation 'org.xerial:sqlite-jdbc:3.40.0.0'
+    compileOnly 'org.xerial:sqlite-jdbc:3.40.0.0'
 
     //json
-    implementation "io.ebean:ebean-jackson-mapper:${ebean_version}"
-    implementation "io.ebean:ebean-jackson-jsonnode:${ebean_version}"
-    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.14.2'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.2'
+    compileOnly "io.ebean:ebean-jackson-mapper:${ebean_version}"
+    compileOnly "io.ebean:ebean-jackson-jsonnode:${ebean_version}"
+    compileOnly 'com.fasterxml.jackson.core:jackson-annotations:2.14.2'
+    compileOnly 'com.fasterxml.jackson.core:jackson-databind:2.14.2'
 
     // logging
     compileOnly 'org.apache.logging.log4j:log4j-core:2.20.0'
@@ -65,6 +65,7 @@ dependencies {
     compileOnly 'mc.pmc:voltpluginmanager:3.2-SNAPSHOT'
     compileOnly 'voltskiya.utilities:VoltskiyaUtilities:2.0-SNAPSHOT'
     compileOnly 'mc.apple:AppleMCUtil:1.0-SNAPSHOT'
+    compileOnly 'voltskiya.lib:LoadDependencies:1.0-SNAPSHOT'
 
     // minecraft api
     compileOnly 'io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT'
