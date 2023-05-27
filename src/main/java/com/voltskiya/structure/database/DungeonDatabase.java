@@ -7,10 +7,12 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.voltskiya.structure.VoltskiyaPlugin;
 import com.voltskiya.structure.dungeon.entity.DDungeon;
 import com.voltskiya.structure.dungeon.entity.DungeonLookup;
+import com.voltskiya.structure.dungeon.entity.layout.DDungeonLayout;
+import com.voltskiya.structure.dungeon.entity.layout.DDungeonLayoutMob;
 import com.voltskiya.structure.dungeon.entity.schematic.DDungeonMobWeight;
 import com.voltskiya.structure.dungeon.entity.schematic.DDungeonSchemMob;
 import com.voltskiya.structure.dungeon.entity.spawn.DDungeonSpawner;
-import com.voltskiya.structure.dungeon.entity.spawn.DungeonCenter;
+import com.voltskiya.structure.dungeon.entity.spawn.EmbeddedLocation;
 import com.voltskiya.structure.lootchest.entity.chest.ChestStorage;
 import com.voltskiya.structure.lootchest.entity.chest.DChest;
 import com.voltskiya.structure.lootchest.entity.group.ChestGroupStorage;
@@ -56,8 +58,9 @@ public class DungeonDatabase extends VoltskiyaDatabase {
     protected List<Class<?>> getEntities() {
         List<Class<?>> entities = new ArrayList<>(List.of(BaseEntity.class, DChestGroup.class, DChest.class, DWorldId.class));
         entities.addAll(
-            List.of(DDungeon.class, DungeonCenter.class,
+            List.of(DDungeon.class, EmbeddedLocation.class,
                 DDungeonSpawner.class,
+                DDungeonLayout.class, DDungeonLayoutMob.class,
                 DDungeonSchemMob.class, DDungeonMobWeight.class));
         return entities;
     }

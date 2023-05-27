@@ -3,8 +3,8 @@ package com.voltskiya.structure.dungeon.entity;
 import com.voltskiya.structure.dungeon.entity.query.QDDungeon;
 import com.voltskiya.structure.dungeon.entity.schematic.DDungeonSchemMob;
 import com.voltskiya.structure.dungeon.entity.schematic.query.QDDungeonSchemMob;
-import com.voltskiya.structure.dungeon.entity.spawn.query.QDDungeonSpawner;
 import java.util.Collection;
+import org.jetbrains.annotations.Nullable;
 
 public class DungeonLookup {
 
@@ -15,13 +15,7 @@ public class DungeonLookup {
             .findSingleAttributeList();
     }
 
-    public static Collection<String> findSpawner(String dungeon) {
-        return new QDDungeonSpawner()
-            .select(QDDungeonSpawner.alias().name)
-            .where().dungeon.name.eq(dungeon)
-            .findSingleAttributeList();
-    }
-
+    @Nullable
     public static DDungeon findDungeon(String dungeon) {
         return new QDDungeon().where().name.ieq(dungeon).findOne();
     }

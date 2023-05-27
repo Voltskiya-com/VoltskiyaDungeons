@@ -13,7 +13,8 @@ public class ChestNBT {
     }
 
     public static void setLootTable(BlockState blockState, String lootTable) {
-        if (blockState instanceof Container)
+        if (blockState instanceof Container) {
             NBT.modify(blockState, nbt -> {nbt.setString("LootTable", lootTable);});
+        }
     }
 }

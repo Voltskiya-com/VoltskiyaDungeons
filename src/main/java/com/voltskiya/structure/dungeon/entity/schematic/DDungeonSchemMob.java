@@ -63,4 +63,5 @@ public class DDungeonSchemMob extends BaseEntity {
         this.noSpawnWeight = noSpawnWeight;
         return this;
     }
+
 }

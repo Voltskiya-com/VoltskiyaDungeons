@@ -37,6 +37,25 @@ public class ChestRespawnTask implements Runnable {
         return !location.getNearbyPlayers(tooClose).isEmpty();
     }
 
+    public static void restockSafe(DChest dChest, Instant restockedAt) {
+        Location location = dChest.getLocation();
+        if (isTooClose(location)) return;
+        restockUnSafe(dChest, restockedAt);
+    }
+
+
+    public static void restockUnSafe(DChest dChest, Instant restockedAt) {
+        Location location = dChest.getLocation();
+        if (!(location.getBlock().getState() instanceof Container chest)) {
+            dChest.delete();
+            return;
+        }
+        chest.getInventory().clear();
+        ChestNBT.setLootTable(chest, dChest.getLootTable());
+        dChest.setRestocked(restockedAt);
+        dChest.save();
+    }
+
     @NotNull
     private List<DChestGroup> passTimeForGroups() {
         int playerCount = Bukkit.getOnlinePlayers().size();
@@ -74,7 +93,7 @@ public class ChestRespawnTask implements Runnable {
     private void restockChests(List<DChest> chestsToRestock, Instant restockedAt) {
         VoltskiyaPlugin.get().scheduleSyncDelayedTask(() -> {
             for (DChest chest : chestsToRestock) {
-                restock(chest, restockedAt);
+                restockSafe(chest, restockedAt);
                 Bukkit.getScheduler().runTaskAsynchronously(VoltskiyaPlugin.get(), () -> chest.save());
             }
         });
@@ -87,23 +106,11 @@ public class ChestRespawnTask implements Runnable {
                 for (DChest chest : chests)
                     if (isTooClose(chest.getLocation())) return;
                 for (DChest chest : chests) {
-                    restock(chest, restockedAt);
+                    restockSafe(chest, restockedAt);
                 }
                 group.save();
                 Bukkit.getScheduler().runTaskAsynchronously(VoltskiyaPlugin.get(), () -> group.save());
             }
         });
-    }
-
-    private void restock(DChest dChest, Instant restockedAt) {
-        Location location = dChest.getLocation();
-        if (isTooClose(location)) return;
-        if (!(location.getBlock().getState() instanceof Container chest)) {
-            dChest.delete();
-            return;
-        }
-        chest.getInventory().clear();
-        ChestNBT.setLootTable(chest, dChest.getLootTable());
-        dChest.setRestocked(restockedAt);
     }
 }

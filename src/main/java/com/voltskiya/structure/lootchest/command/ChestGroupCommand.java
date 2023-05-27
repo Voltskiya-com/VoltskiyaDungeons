@@ -19,8 +19,10 @@ import com.voltskiya.structure.lootchest.entity.chest.DChest;
 import com.voltskiya.structure.lootchest.entity.group.ChestGroupStorage;
 import com.voltskiya.structure.lootchest.entity.group.DChestGroup;
 import com.voltskiya.structure.lootchest.entity.group.DChestGroupConfig;
+import com.voltskiya.structure.lootchest.service.ChestRespawnTask;
 import com.voltskiya.structure.lootchest.util.ChestNBT;
 import io.ebean.Transaction;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -166,6 +168,17 @@ public class ChestGroupCommand extends BaseCommand implements SendMessage {
 
         String summary = summarizeChests(center, chestGroup.getChests());
         aqua(player, "The following chests are now in group '%s':\n".formatted(chestGroup.getName()) + summary);
+    }
+
+    @Subcommand("respawn")
+    @CommandCompletion("@range:10-100")
+    public void respawn(Player player, @Name("radius") int radius) {
+        List<DChest> chests = ChestStorage.findNearbyChests(player.getLocation(), radius);
+        Instant now = Instant.now();
+        for (DChest chest : chests) {
+            ChestRespawnTask.restockUnSafe(chest, now);
+        }
+        aqua(player, "Successfully restocked %d nearby chests".formatted(chests.size()));
     }
 
     @Subcommand("config")
