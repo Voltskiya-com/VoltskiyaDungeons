@@ -19,9 +19,9 @@ import org.bukkit.event.player.PlayerInteractEvent;
 public class DungeonWand extends Wand implements SendMessage {
 
     private DDungeon dungeon = null;
+    private DDungeonSpawner spawner = null;
     private Location pos1 = null;
     private Location pos2 = null;
-    private DDungeonSpawner spawner;
 
     public DungeonWand(Player player) {
         super(player);
@@ -32,6 +32,23 @@ public class DungeonWand extends Wand implements SendMessage {
             entityLocation.getBlockX(),
             entityLocation.getBlockY(),
             entityLocation.getBlockZ());
+    }
+
+    public static void registerMob(Player player, Entity entity, DDungeonLayout layout) {
+        if (DungeonLayoutStorage.findMobAt(layout, entity.getLocation()) != null) {
+            SendMessage.get().aqua(player, "Already registered");
+            return;
+        }
+        for (String tag : entity.getScoreboardTags()) {
+            DDungeonSchemMob mob = SchemMobSpawnEgg.getSchemMob(layout.getDungeon(), tag);
+            if (mob == null) continue;
+            Location relative = entity.getLocation().subtract(layout.getCenter());
+            new DDungeonLayoutMob(layout, relative, mob).save();
+            SendMessage.get().aqua(player,
+                "Registered mob at %s with %s".formatted(locationMessage(entity.getLocation()), layout.getDungeon().getName()));
+            return;
+        }
+        SendMessage.get().red(player, "Mob does not have a schematic mob");
     }
 
     @Override
@@ -55,11 +72,13 @@ public class DungeonWand extends Wand implements SendMessage {
     }
 
     public DDungeon getDungeon() {
-        return dungeon;
+        if (this.dungeon != null) this.dungeon.refresh();
+        return this.dungeon;
     }
 
     public DungeonWand setDungeon(DDungeon dungeon) {
         this.dungeon = dungeon;
+        this.spawner = dungeon.getSpawner(DDungeonSpawner.DEFAULT_NAME);
         return this;
     }
 
@@ -95,15 +114,7 @@ public class DungeonWand extends Wand implements SendMessage {
             deleteMobAt(entity, layout);
             return;
         }
-        for (String tag : entity.getScoreboardTags()) {
-            DDungeonSchemMob mob = SchemMobSpawnEgg.getSchemMob(dungeon, tag);
-            if (mob == null) continue;
-            Location relative = entity.getLocation().subtract(layout.getCenter());
-            new DDungeonLayoutMob(layout, relative, mob).save();
-            aqua(player, "Registered mob at %s with %s".formatted(locationMessage(entity.getLocation()), dungeon.getName()));
-            return;
-        }
-        red(player, "Mob does not have a schematic mob");
+        registerMob(player, entity, layout);
     }
 
     private void deleteMobAt(Entity entity, DDungeonLayout layout) {
@@ -119,6 +130,7 @@ public class DungeonWand extends Wand implements SendMessage {
     }
 
     public DDungeonSpawner getSpawner() {
+        if (this.spawner != null) this.spawner.refresh();
         return this.spawner;
     }
 

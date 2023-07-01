@@ -27,7 +27,6 @@ public class DDungeonLayoutMob extends BaseEntity {
     protected EmbeddedLocation relative;
     @ManyToOne
     protected DDungeonSchemMob mob;
-    private transient Location location;
 
     public DDungeonLayoutMob(DDungeonLayout layout, Location relativeLocation, DDungeonSchemMob mob) {
         this.layout = layout;
@@ -37,11 +36,10 @@ public class DDungeonLayoutMob extends BaseEntity {
 
     @Nullable
     public Location getLocation(Location center) {
-        if (this.location != null) return this.location.clone();
         Location relative = this.relative.toLocation();
         if (center == null || relative == null) return null;
-        this.location = relative.add(center);
-        return this.location.clone();
+        relative.setWorld(center.getWorld());
+        return relative.add(center);
     }
 
     public DDungeonSchemMob getSchemMob() {

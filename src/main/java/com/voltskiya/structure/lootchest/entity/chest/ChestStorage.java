@@ -55,6 +55,7 @@ public class ChestStorage {
             .x.between(x - radius, x + radius)
             .y.between(y - radius, y + radius)
             .z.between(z - radius, z + radius)
+            .endAnd()
             .findList();
     }
 
@@ -64,6 +65,7 @@ public class ChestStorage {
             .and()
             .status.eq(DChestLootStatus.LOOTED)
             .group.isNull()
+            .endAnd()
             .findList();
     }
 }

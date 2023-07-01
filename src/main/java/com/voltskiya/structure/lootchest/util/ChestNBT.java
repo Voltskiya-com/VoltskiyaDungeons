@@ -7,8 +7,11 @@ import org.bukkit.block.Container;
 public class ChestNBT {
 
     public static String getLootTable(BlockState blockState) {
-        if (blockState instanceof Container)
-            return NBT.get(blockState, nbt -> nbt.getString("LootTable"));
+        if (blockState instanceof Container) {
+            String table = NBT.get(blockState, nbt -> nbt.getString("LootTable"));
+            if (table.isBlank()) return null;
+            return table;
+        }
         return null;
     }
 

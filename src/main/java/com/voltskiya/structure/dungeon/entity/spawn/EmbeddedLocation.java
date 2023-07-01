@@ -15,17 +15,17 @@ public class EmbeddedLocation {
     @Column
     protected UUID world;
     @Column
-    protected double x;
+    protected Double x;
     @Column
-    protected double y;
+    protected Double y;
     @Column
-    protected double z;
+    protected Double z;
     @Column
-    protected double xFacing;
+    protected Double xFacing;
     @Column
-    protected double yFacing;
+    protected Double yFacing;
     @Column
-    protected double zFacing;
+    protected Double zFacing;
     private transient Location location;
 
     public EmbeddedLocation(Location center) {
@@ -51,6 +51,15 @@ public class EmbeddedLocation {
 
     @Nullable
     private World getWorld() {
+        if (world == null) return null;
         return Bukkit.getWorld(this.world);
+    }
+
+    public void addLocation(Location addLocation) {
+        this.x += addLocation.getX();
+        this.y += addLocation.getY();
+        this.z += addLocation.getZ();
+        this.world = addLocation.getWorld().getUID();
+        this.location = null;
     }
 }

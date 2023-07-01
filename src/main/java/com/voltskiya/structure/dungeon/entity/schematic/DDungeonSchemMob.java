@@ -2,6 +2,7 @@ package com.voltskiya.structure.dungeon.entity.schematic;
 
 import com.voltskiya.structure.database.BaseEntity;
 import com.voltskiya.structure.dungeon.entity.DDungeon;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import javax.persistence.CascadeType;
@@ -21,7 +22,7 @@ public class DDungeonSchemMob extends BaseEntity {
     private UUID id;
     @ManyToOne(optional = false)
     private DDungeon dungeon;
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String name;
     @OneToMany(cascade = CascadeType.ALL)
     private List<DDungeonMobWeight> mobs;
@@ -47,7 +48,7 @@ public class DDungeonSchemMob extends BaseEntity {
     }
 
     public List<DDungeonMobWeight> getMobs() {
-        return mobs;
+        return mobs.stream().sorted(Comparator.comparingInt(DDungeonMobWeight::getWeight).reversed()).toList();
     }
 
     public DDungeonSchemMob setMobs(List<DDungeonMobWeight> mobs) {

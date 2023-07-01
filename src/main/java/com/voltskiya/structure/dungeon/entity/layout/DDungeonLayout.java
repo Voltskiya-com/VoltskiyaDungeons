@@ -36,10 +36,24 @@ public class DDungeonLayout extends BaseEntity {
     }
 
     public void setCenter(Location center) {
+        Location oldCenter = this.center.toLocation();
+        if (oldCenter == null) {
+            this.center = new EmbeddedLocation(center);
+            return;
+        }
+        Location addLocation = oldCenter.clone().subtract(center);
+        for (DDungeonLayoutMob mob : this.getMobs()) {
+            mob.relative.addLocation(addLocation);
+            mob.save();
+        }
         this.center = new EmbeddedLocation(center);
     }
 
     public List<DDungeonLayoutMob> getMobs() {
         return this.mobs;
+    }
+
+    public DDungeon getDungeon() {
+        return this.dungeon;
     }
 }

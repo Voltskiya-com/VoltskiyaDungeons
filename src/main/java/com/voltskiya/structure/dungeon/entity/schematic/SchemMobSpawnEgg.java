@@ -2,8 +2,10 @@ package com.voltskiya.structure.dungeon.entity.schematic;
 
 import apple.mc.utilities.data.serialize.EntitySerializable;
 import com.voltskiya.structure.dungeon.entity.DDungeon;
+import com.voltskiya.structure.dungeon.entity.layout.DDungeonLayout;
 import de.tr7zw.nbtapi.NBT;
 import de.tr7zw.nbtapi.iface.ReadWriteNBT;
+import de.tr7zw.nbtapi.iface.ReadWriteNBTList;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -40,7 +42,9 @@ public class SchemMobSpawnEgg {
             }
             entityTag.mergeCompound(mobType.getEntityTag());
             entityTag.setBoolean("NoAI", true);
-            entityTag.getStringList("Tags").add(getSchemTag(schematic));
+            ReadWriteNBTList<String> tags = entityTag.getStringList("Tags");
+            tags.add(getSchemFullTag(schematic));
+            tags.add(getSchemDungeonTag(schematic.getDungeon()));
         });
 
         ItemMeta meta = egg.getItemMeta();
@@ -50,13 +54,19 @@ public class SchemMobSpawnEgg {
     }
 
     @NotNull
-    private static String getSchemTag(DDungeonSchemMob schematic) {
-        return TAG_PREFIX + schematic.getName();
+    private static String getSchemFullTag(DDungeonSchemMob schematic) {
+        return TAG_PREFIX + "." + schematic.getDungeon().getName() + "." + schematic.getName();
+    }
+
+    @NotNull
+    private static String getSchemDungeonTag(DDungeon dungeon) {
+        return TAG_PREFIX + "." + dungeon.getName();
     }
 
     public static DDungeonSchemMob getSchemMob(DDungeon dungeon, String tag) {
-        if (!tag.startsWith(TAG_PREFIX)) return null;
-        String schem = tag.substring(TAG_PREFIX.length());
+        String prefix = getSchemDungeonTag(dungeon) + ".";
+        if (!tag.startsWith(prefix)) return null;
+        String schem = tag.substring(prefix.length());
         for (DDungeonSchemMob mob : dungeon.getMobTypes()) {
             if (mob.getName().equals(schem)) {
                 return mob;
@@ -65,19 +75,31 @@ public class SchemMobSpawnEgg {
         return null;
     }
 
-    public static void summonSchematic(Location location, DDungeonSchemMob mob) {
-        if (mob.getMobs().isEmpty()) return;
-        String tag = getSchemTag(mob);
-        location.getNearbyEntities(0.5, 0.5, 0.5).forEach((e) -> {
+    public static void killSchematic(DDungeonSchemMob mob) {
+        DDungeonLayout layout = mob.getDungeon().getLayout();
+        if (layout == null) return;
+        Location center = layout.getCenter();
+        if (center == null) return;
+
+        String tag = getSchemDungeonTag(mob.getDungeon());
+        center.getWorld().getEntities().forEach((e) -> {
             if (e.getScoreboardTags().contains(tag)) {
                 e.remove();
             }
         });
+    }
+
+    public static void summonSchematic(Location location, DDungeonSchemMob mob) {
+        if (mob.getMobs().isEmpty()) return;
+        String fullTag = getSchemFullTag(mob);
+        String tag = getSchemDungeonTag(mob.getDungeon());
         mob.getMobs().get(0).getEntity().spawn(location, (e) -> {
             if (e instanceof LivingEntity living) {
                 living.setAI(false);
             }
+            e.setPersistent(true);
             e.addScoreboardTag(tag);
+            e.addScoreboardTag(fullTag);
         });
     }
 

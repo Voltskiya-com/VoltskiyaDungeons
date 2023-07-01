@@ -1,9 +1,11 @@
 package com.voltskiya.structure.dungeon.entity;
 
+import com.voltskiya.structure.database.DungeonDatabase;
 import com.voltskiya.structure.dungeon.entity.query.QDDungeon;
 import com.voltskiya.structure.dungeon.entity.schematic.DDungeonSchemMob;
 import com.voltskiya.structure.dungeon.entity.schematic.query.QDDungeonSchemMob;
 import java.util.Collection;
+import java.util.UUID;
 import org.jetbrains.annotations.Nullable;
 
 public class DungeonLookup {
@@ -25,5 +27,9 @@ public class DungeonLookup {
             .where().and()
             .dungeon.eq(dungeon)
             .name.ieq(mob).findOne();
+    }
+
+    public static DDungeon findDungeon(UUID dungeon) {
+        return DungeonDatabase.get().getDB().find(DDungeon.class, dungeon);
     }
 }

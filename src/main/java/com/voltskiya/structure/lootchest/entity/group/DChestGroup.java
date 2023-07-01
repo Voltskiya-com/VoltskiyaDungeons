@@ -1,6 +1,7 @@
 package com.voltskiya.structure.lootchest.entity.group;
 
 import com.voltskiya.structure.database.BaseEntity;
+import com.voltskiya.structure.dungeon.entity.spawn.DDungeonSpawner;
 import com.voltskiya.structure.lootchest.entity.chest.ChestStorage;
 import com.voltskiya.structure.lootchest.entity.chest.DChest;
 import com.voltskiya.structure.lootchest.entity.chest.DChestLootStatus;
@@ -18,6 +19,7 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import org.bukkit.Location;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +30,9 @@ public class DChestGroup extends BaseEntity {
 
     @Id
     private UUID uuid;
+    @OneToOne
+    private DDungeonSpawner dungeonSpawner;
+
     @Column(unique = true)
     private String name;
     @DbJson
@@ -51,11 +56,11 @@ public class DChestGroup extends BaseEntity {
         this.name = name;
         this.config = new DChestGroupConfig();
         this.chests = new ArrayList<>();
-        status = DChestLootStatus.NEVER_TOUCHED;
+        this.status = DChestLootStatus.NEVER_TOUCHED;
     }
 
     public void addChest(Location location, @Nullable String lootTable, Transaction transaction) {
-        boolean alreadyExists = this.getChests().stream().anyMatch((c) -> c.getLocation().equals(location));
+        boolean alreadyExists = this.chests.stream().anyMatch((c) -> c.getLocation().equals(location));
         if (alreadyExists) return;
         DChest foundChest = ChestStorage.findChestAt(location);
         if (foundChest == null) {
@@ -64,7 +69,7 @@ public class DChestGroup extends BaseEntity {
         }
         foundChest.setGroup(this, transaction);
 
-        this.getChests().add(foundChest);
+        this.chests.add(foundChest);
         this.modifyLootedAt(foundChest);
     }
 
@@ -111,6 +116,9 @@ public class DChestGroup extends BaseEntity {
     public void setRestocked(Instant restocked) {
         restockedAt = Timestamp.from(restocked);
         status = DChestLootStatus.RESTOCKED;
+        for (DChest chest : getChests()) {
+            chest.setRestocked(restocked);
+        }
     }
 
     public DChestGroup passTime(int playerCount, int respawnIntervalTicks) {
@@ -127,4 +135,13 @@ public class DChestGroup extends BaseEntity {
         this.chests.clear();
         return this;
     }
+
+    public DDungeonSpawner getSpawner() {
+        return this.dungeonSpawner;
+    }
+
+    public void setSpawner(DDungeonSpawner spawner) {
+        this.dungeonSpawner = spawner;
+    }
+
 }

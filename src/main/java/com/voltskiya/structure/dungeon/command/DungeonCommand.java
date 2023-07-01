@@ -24,11 +24,15 @@ import com.voltskiya.structure.dungeon.entity.schematic.SchemMobSpawnEgg;
 import com.voltskiya.structure.dungeon.entity.spawn.DDungeonSpawner;
 import com.voltskiya.structure.dungeon.entity.spawn.DungeonSpawnerStorage;
 import com.voltskiya.structure.dungeon.wand.DungeonWand;
+import com.voltskiya.structure.lootchest.entity.group.DChestGroup;
+import io.ebean.Model;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -39,9 +43,12 @@ import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.BoundingBox;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
 @CommandAlias("dungeon")
@@ -54,11 +61,17 @@ public class DungeonCommand extends BaseCommand implements SendMessage {
         VoltskiyaPlugin.get().registerCommand(this);
         CommandCompletions<BukkitCommandCompletionContext> commandCompletions = VoltskiyaPlugin.get().getCommandManager()
             .getCommandCompletions();
-        commandCompletions.registerCompletion("dungeon-spawner",
+        commandCompletions.registerAsyncCompletion("dungeon-spawner",
             c -> {
                 DungeonWand wand = DungeonModule.get().dungeonWand().getWand(c.getPlayer());
                 if (wand.getDungeon() == null) return Collections.emptyList();
                 return wand.getDungeon().getSpawners().stream().map(DDungeonSpawner::getName).toList();
+            });
+        commandCompletions.registerAsyncCompletion("dungeon-mob",
+            c -> {
+                DungeonWand wand = DungeonModule.get().dungeonWand().getWand(c.getPlayer());
+                if (wand.getDungeon() == null) return Collections.emptyList();
+                return wand.getDungeon().getMobTypes().stream().map(DDungeonSchemMob::getName).toList();
             });
         commandCompletions.registerAsyncCompletion("dungeon", c -> DungeonLookup.dungeonNames());
     }
@@ -110,28 +123,99 @@ public class DungeonCommand extends BaseCommand implements SendMessage {
         return layout;
     }
 
+    private <T> boolean checkConfirm(Player player, String confirm, T namable, Function<T, String> getName, String command) {
+        if (namable == null) {
+            red(player, "Nothing selected!");
+            return false;
+        }
+        if (confirm == null || !confirm.equalsIgnoreCase("confirm")) {
+            red(player, "Are you sure you want to delete %s?\nTo confirm run: %s confirm".formatted(getName.apply(namable), command));
+            return false;
+        }
+        return true;
+    }
+
+    @Subcommand("delete")
+    @CommandCompletion("@nothing")
+    public void delete(Player player, @Optional @Name("confirm") String confirm) {
+        DungeonWand wand = DungeonModule.get().dungeonWand().getWand(player);
+        DDungeon dungeon = wand.getDungeon();
+        boolean canContinue = checkConfirm(player, confirm, dungeon, DDungeon::getName, "/dungeon delete");
+        if (!canContinue) return;
+        for (DDungeonSpawner spawner : dungeon.getSpawners()) {
+            DChestGroup chestGroup = spawner.getChestGroup();
+            if (chestGroup != null) {
+                chestGroup.setSpawner(null);
+                chestGroup.save();
+            }
+            spawner.setChestGroup(null);
+            spawner.save();
+            spawner.delete();
+        }
+        for (DDungeonSchemMob schem : dungeon.getMobTypes()) {
+            List<DDungeonMobWeight> mobs = schem.getMobs();
+            for (DDungeonMobWeight weight : mobs) {
+                weight.delete();
+            }
+            schem.delete();
+        }
+        DDungeonLayout layout = dungeon.getLayout();
+        if (layout != null) {
+            for (DDungeonLayoutMob mob : layout.getMobs()) {
+                mob.delete();
+            }
+        }
+        dungeon.delete();
+        if (layout != null)
+            layout.delete();
+
+        aqua(player, "Deleted dungeon " + dungeon.getName());
+    }
+
     @Subcommand("spawner")
     public class DungeonSpawnerCommand extends BaseCommand {
 
-        @Subcommand("paste")
-        public void paste(Player player) {
+        @Subcommand("kill")
+        public void kill(Player player) {
+            DDungeonSpawner spawner = getSpawner(player);
+            if (spawner == null) return;
+            DungeonSpawnerStorage.kill(spawner);
+        }
+
+        @Subcommand("tp")
+        public void tp(Player player) {
+            DDungeonSpawner spawner = getSpawner(player);
+            if (spawner == null) return;
+            Location center = spawner.getCenter();
+            if (center == null) {
+                red(player, "Center is not set");
+                return;
+            }
+            player.teleport(center);
+        }
+
+        @Nullable
+        private DDungeonSpawner getSpawner(Player player) {
             DungeonWand wand = DungeonModule.get().dungeonWand().getWand(player);
             DDungeonSpawner spawner = wand.getSpawner();
             if (spawner == null) {
                 red(player, "Select a dungeon spawner before trying to do this");
-                return;
+                return null;
             }
+            return spawner;
+        }
+
+        @Subcommand("paste")
+        public void paste(Player player) {
+            DDungeonSpawner spawner = getSpawner(player);
+            if (spawner == null) return;
             DungeonSpawnerStorage.summon(spawner);
         }
 
         @Subcommand("center set")
         public void setCenter(Player player) {
-            DungeonWand wand = DungeonModule.get().dungeonWand().getWand(player);
-            DDungeonSpawner spawner = wand.getSpawner();
-            if (spawner == null) {
-                red(player, "Select a dungeon spawner before trying to do this");
-                return;
-            }
+            DDungeonSpawner spawner = getSpawner(player);
+            if (spawner == null) return;
             spawner.setCenter(player.getLocation());
             spawner.save();
             aqua(player, "Successfully set the center");
@@ -168,10 +252,48 @@ public class DungeonCommand extends BaseCommand implements SendMessage {
             wand.setSpawner(spawner);
             aqua(player, "Selected %s.%s".formatted(dungeon.getName(), spawner.getName()));
         }
+
+        @Subcommand("delete")
+        @CommandCompletion("@nothing")
+        public void delete(Player player, @Optional @Name("confirm") String confirm) {
+            DungeonWand wand = DungeonModule.get().dungeonWand().getWand(player);
+            DDungeonSpawner spawner = wand.getSpawner();
+            boolean canContinue = checkConfirm(player, confirm, spawner, DDungeonSpawner::getFullName, "/dungeon spawner delete");
+            if (!canContinue) return;
+            spawner.delete();
+            aqua(player, "Deleted dungeon " + spawner.getName());
+        }
     }
 
     @Subcommand("layout")
     public class DungeonLayoutCommand extends BaseCommand {
+
+        @Subcommand("kill")
+        public void kill(Player player) {
+            DDungeonLayout layout = getPlayerLayout(player);
+            if (layout == null) return;
+            List<DDungeonLayoutMob> mobs = layout.getMobs();
+            Location center = layout.getCenter();
+            if (center == null) {
+                red(player, "Set the layout center before trying to do this");
+                return;
+            }
+            for (DDungeonLayoutMob mob : mobs) {
+                SchemMobSpawnEgg.killSchematic(mob.getSchemMob());
+            }
+        }
+
+        @Subcommand("register mob")
+        @CommandCompletion("@range:10-100 @nothing")
+        public void registerMobs(Player player, @Name("radius") int radius) {
+            DDungeonLayout layout = getPlayerLayout(player);
+            if (layout == null) return;
+            List<Entity> nearbyEntities = player.getNearbyEntities(radius, radius, radius);
+            nearbyEntities.sort(Comparator.comparing(Entity::getLocation, Comparator.comparingDouble(player.getLocation()::distance)));
+            for (Entity entity : nearbyEntities) {
+                DungeonWand.registerMob(player, entity, layout);
+            }
+        }
 
         @Subcommand("tp")
         public void teleport(Player player) {
@@ -190,6 +312,7 @@ public class DungeonCommand extends BaseCommand implements SendMessage {
                 red(player, "Set the layout center before trying to do this");
                 return;
             }
+            mobs.stream().map(DDungeonLayoutMob::getSchemMob).forEach(SchemMobSpawnEgg::killSchematic);
             for (DDungeonLayoutMob mob : mobs) {
                 Location location = mob.getLocation(center);
                 if (location == null) continue;
@@ -260,6 +383,7 @@ public class DungeonCommand extends BaseCommand implements SendMessage {
                 mob.incrementWeight();
             }
             if (mobTypes.isEmpty()) return null;
+            mobType.getMobs().forEach(Model::delete);
             mobType.setMobs(mobTypes.values().stream().toList());
             mobType.setNoSpawnWeight(noSpawnWeight);
             mobType.save();
@@ -267,11 +391,43 @@ public class DungeonCommand extends BaseCommand implements SendMessage {
         }
 
         @Subcommand("paste")
-        public void paste() {
+        @CommandCompletion("@dungeon-mob")
+        public void paste(Player player, @Name("mob_name") String mobArg) {
+            DungeonWand wand = DungeonModule.get().dungeonWand().getWand(player);
+            DDungeon dungeon = wand.getDungeon();
+            if (dungeon == null) {
+                red(player, "Select a dungeon before trying to do this");
+                return;
+            }
+            DDungeonSchemMob schemMob = DungeonLookup.findMob(dungeon, mobArg);
+            if (schemMob == null) {
+                red(player, "There is no mob named %s in %s".formatted(mobArg, dungeon.getName()));
+                return;
+            }
+            Vector direction = player.getFacing().getDirection();
+            Location column = player.getLocation().setDirection(direction);
+            Location location = column.clone();
+            Vector rotatedDirection = direction.clone().rotateAroundY(Math.toRadians(90));
+            for (DDungeonMobWeight mob : schemMob.getMobs()) {
+                for (int i = 0; i < mob.getWeight(); i++) {
+                    mob.getEntity().spawn(location, (e) -> {
+                        if (e instanceof LivingEntity living) living.setAI(false);
+                    });
+                    location.add(direction);
+                }
+                column.add(rotatedDirection);
+                location = column.clone();
+            }
+            for (int i = 0; i < schemMob.getNoSpawnWeight(); i++) {
+                location.getWorld().spawnEntity(location, EntityType.ARMOR_STAND);
+            }
+            ItemStack egg = SchemMobSpawnEgg.makeSpawnEgg(schemMob);
+            if (egg != null)
+                player.getInventory().addItem(egg);
         }
 
         @Subcommand("set")
-        @CommandCompletion("[name]")
+        @CommandCompletion("@dungeon-mob|[name]")
         public void set(Player player, @Name("mob_name") String mobArg) {
             DungeonWand wand = DungeonModule.get().dungeonWand().getWand(player);
             Location pos1 = wand.getPos1();
@@ -304,6 +460,7 @@ public class DungeonCommand extends BaseCommand implements SendMessage {
                 red(player, "An error occurred saving the spawn egg");
                 return;
             }
+            wand.getDungeon().refresh();
             player.getInventory().addItem(mobSpawnEgg);
         }
     }

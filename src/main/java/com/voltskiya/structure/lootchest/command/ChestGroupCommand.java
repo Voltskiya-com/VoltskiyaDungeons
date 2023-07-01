@@ -14,6 +14,9 @@ import com.voltskiya.lib.acf.annotation.Optional;
 import com.voltskiya.lib.acf.annotation.Subcommand;
 import com.voltskiya.structure.VoltskiyaPlugin;
 import com.voltskiya.structure.database.DungeonDatabase;
+import com.voltskiya.structure.dungeon.DungeonModule;
+import com.voltskiya.structure.dungeon.entity.spawn.DDungeonSpawner;
+import com.voltskiya.structure.dungeon.wand.DungeonWand;
 import com.voltskiya.structure.lootchest.entity.chest.ChestStorage;
 import com.voltskiya.structure.lootchest.entity.chest.DChest;
 import com.voltskiya.structure.lootchest.entity.group.ChestGroupStorage;
@@ -27,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -67,7 +71,8 @@ public class ChestGroupCommand extends BaseCommand implements SendMessage {
             for (int y = -radius; y <= radius; y++) {
                 for (int z = -radius; z <= radius; z++) {
                     BlockState block = world.getBlockState(location);
-                    nearbyChests.add(block);
+                    if (block instanceof Container)
+                        nearbyChests.add(block);
 
                     location.add(0, 0, 1);
                 }
@@ -133,7 +138,7 @@ public class ChestGroupCommand extends BaseCommand implements SendMessage {
 
     @Subcommand("delete")
     @CommandCompletion("@chestGroups [force]|true|false")
-    public void deleteLabel(Player player, @Name("group_name") String chestGroupName, @Optional @Name("force") boolean force) {
+    public void deleteLabel(Player player, @Name("group_name") String chestGroupName, @Optional @Name("force") Boolean force) {
         DChestGroup chestGroup = getChestGroup(player, chestGroupName);
         if (chestGroup == null) return;
         if (!force && !chestGroup.getChests().isEmpty()) {
@@ -157,15 +162,14 @@ public class ChestGroupCommand extends BaseCommand implements SendMessage {
         }
         DChestGroup chestGroup = ChestGroupStorage.computeChestGroup(chestGroupName);
         Location center = player.getLocation();
-        try (Transaction transaction = DungeonDatabase.db().beginTransaction()) {
-            List<BlockState> chests = findChestsInRadius(radius, center);
+        List<BlockState> chests = findChestsInRadius(radius, center);
+        try (Transaction transaction = DungeonDatabase.get().getDB().beginTransaction()) {
             for (BlockState chest : chests) {
                 chestGroup.addChest(chest.getLocation(), ChestNBT.getLootTable(chest), transaction);
             }
-            chestGroup.save(transaction);
+            chestGroup.save();
             transaction.commit();
         }
-
         String summary = summarizeChests(center, chestGroup.getChests());
         aqua(player, "The following chests are now in group '%s':\n".formatted(chestGroup.getName()) + summary);
     }
@@ -176,9 +180,41 @@ public class ChestGroupCommand extends BaseCommand implements SendMessage {
         List<DChest> chests = ChestStorage.findNearbyChests(player.getLocation(), radius);
         Instant now = Instant.now();
         for (DChest chest : chests) {
-            ChestRespawnTask.restockUnSafe(chest, now);
+            ChestRespawnTask.restock(chest, now, true);
         }
         aqua(player, "Successfully restocked %d nearby chests".formatted(chests.size()));
+    }
+
+    @Subcommand("passtime")
+    @CommandCompletion("[minutes]|@range:1-300")
+    public void passTime(CommandSender player, @Optional @Name("minutes") Integer timeToPassArg) {
+        int timeToPass = Objects.requireNonNullElse(timeToPassArg, 100000) * 20;
+        VoltskiyaPlugin.get().runTaskAsync(() -> new ChestRespawnTask().passTime(timeToPass));
+    }
+
+    @Subcommand("respawn_group")
+    @CommandCompletion("@chestGroups")
+    public void respawn(Player player, @Name("group_name") String chestGroupName) {
+        DChestGroup chestGroup = ChestGroupStorage.computeChestGroup(chestGroupName);
+        ChestRespawnTask.restockGroup(Instant.now(), chestGroup);
+        aqua(player, "Successfully restocked group %s".formatted(chestGroup.getName()));
+    }
+
+    @Subcommand("dungeon add")
+    @CommandCompletion("@chestGroups @nothing")
+    public void addDungeon(Player player, @Name("group_name") String chestGroupName) {
+        DChestGroup chestGroup = getChestGroup(player, chestGroupName);
+        if (chestGroup == null) return;
+        DungeonWand wand = DungeonModule.get().dungeonWand().getWand(player);
+        DDungeonSpawner spawner = wand.getSpawner();
+        if (spawner == null) {
+            red(player, "Select a dungeon spawner before registering it to a chestGroup");
+            return;
+        }
+        chestGroup.setSpawner(spawner);
+        chestGroup.save();
+        aqua(player, "Successfully set %s.%s to respawn with chest_group %s"
+            .formatted(spawner.getDungeon().getName(), spawner.getName(), chestGroup.getName()));
     }
 
     @Subcommand("config")

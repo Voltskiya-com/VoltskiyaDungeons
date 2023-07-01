@@ -3,4 +3,4 @@ version: 1.0
 main: com.voltskiya.structure.VoltskiyaPlugin
 api-version: 1.19
 authors: [ appleptr16 ]
-softdepend: [ VoltPluginManager, VoltskiyaUtilities ]
+softdepend: [ LoadDependencies, VoltPluginManager, AppleMCUtil, DecodingNms, VoltskiyaUtilities, VoltskiyaMobSystem ]
