@@ -5,6 +5,7 @@ import apple.mc.utilities.player.wand.WandType;
 import com.voltskiya.lib.AbstractModule;
 import com.voltskiya.structure.dungeon.command.DungeonCommand;
 import com.voltskiya.structure.dungeon.wand.DungeonWand;
+import com.voltskiya.structure.dungeon.wand.DungeonWandEntityListener;
 
 public class DungeonModule extends AbstractModule implements PluginModuleMcUtil {
 
@@ -25,8 +26,9 @@ public class DungeonModule extends AbstractModule implements PluginModuleMcUtil 
 
     @Override
     public void enable() {
-        new DungeonCommand();
         dungeonWand = createWand(DungeonWand::new, "dungeon_wand");
+        new DungeonCommand();
+        new DungeonWandEntityListener();
     }
 
     @Override

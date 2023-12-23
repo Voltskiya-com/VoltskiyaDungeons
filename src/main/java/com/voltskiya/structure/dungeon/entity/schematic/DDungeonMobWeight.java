@@ -39,4 +39,5 @@ public class DDungeonMobWeight extends BaseEntity {
     public int getWeight() {
         return this.weight;
     }
+
 }

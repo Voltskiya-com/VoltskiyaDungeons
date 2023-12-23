@@ -48,9 +48,6 @@ dependencies {
     compileOnly 'io.ebean:ebean-migration:13.7.0'
     compileOnly "org.glassfish.jaxb:jaxb-runtime:2.3.2"
 
-    // sqlite connection driver
-    compileOnly 'org.xerial:sqlite-jdbc:3.40.0.0'
-
     //json
     compileOnly "io.ebean:ebean-jackson-mapper:${ebean_version}"
     compileOnly "io.ebean:ebean-jackson-jsonnode:${ebean_version}"
@@ -64,11 +61,12 @@ dependencies {
     // voltksiya
     compileOnly 'mc.pmc:voltpluginmanager:3.2-SNAPSHOT'
     compileOnly 'voltskiya.utilities:VoltskiyaUtilities:2.0-SNAPSHOT'
+    compileOnly 'voltskiya.mob:VoltskiyaMobSystem:1.0-SNAPSHOT'
     compileOnly 'mc.apple:AppleMCUtil:1.0-SNAPSHOT'
     compileOnly 'voltskiya.lib:LoadDependencies:1.0-SNAPSHOT'
 
     // minecraft api
-    compileOnly 'io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT'
+    compileOnly 'io.papermc.paper:paper-api:1.20.1-R0.1-SNAPSHOT'
 
     // minecraft libraries
     compileOnly 'de.tr7zw:item-nbt-api-plugin:2.11.2'

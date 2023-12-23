@@ -76,7 +76,7 @@ public class DChest extends BaseEntity {
 
     public void setGroup(DChestGroup group, Transaction transaction) {
         this.group = group;
-        save(transaction);
+        this.save(transaction);
     }
 
     public Location getLocation() {
@@ -90,7 +90,6 @@ public class DChest extends BaseEntity {
     public void setRestocked(Instant restockedAt) {
         this.restockedAt = Timestamp.from(restockedAt);
         this.status = DChestLootStatus.RESTOCKED;
-        if (this.group != null) this.group.setRestocked(restockedAt);
     }
 
     public DChest passTime(int playerCount, int respawnIntervalTicks) {

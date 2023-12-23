@@ -45,12 +45,27 @@ public class ChestStorage {
             .z.eq(z).findOne();
     }
 
+    public static List<DChest> findNearbyChests(Location location, int radius) {
+        int x = location.getBlockX();
+        int y = location.getBlockY();
+        int z = location.getBlockZ();
+        DWorldId world = WorldStorage.getWorld(location.getWorld().getUID());
+        return new QDChest().where().and()
+            .world.eq(world)
+            .x.between(x - radius, x + radius)
+            .y.between(y - radius, y + radius)
+            .z.between(z - radius, z + radius)
+            .endAnd()
+            .findList();
+    }
+
     public static List<DChest> listLootedLonerChests() {
         return new QDChest()
             .where()
             .and()
             .status.eq(DChestLootStatus.LOOTED)
             .group.isNull()
+            .endAnd()
             .findList();
     }
 }
