@@ -1,6 +1,7 @@
 package com.voltskiya.structure.lootchest.util;
 
 import de.tr7zw.nbtapi.NBT;
+import de.tr7zw.nbtapi.iface.ReadableNBT;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
 
@@ -8,7 +9,7 @@ public class ChestNBT {
 
     public static String getLootTable(BlockState blockState) {
         if (blockState instanceof Container) {
-            String table = NBT.get(blockState, nbt -> nbt.getString("LootTable"));
+            String table = NBT.get(blockState, (ReadableNBT nbt) -> nbt.getString("LootTable"));
             if (table.isBlank()) return null;
             return table;
         }

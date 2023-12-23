@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.VisibilityChecker.Std;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.voltskiya.lib.database.VoltskiyaDatabase;
+import com.voltskiya.lib.database.config.VoltskiyaDatabaseConfig;
+import com.voltskiya.lib.database.config.VoltskiyaMysqlConfig;
 import com.voltskiya.structure.VoltskiyaPlugin;
 import com.voltskiya.structure.dungeon.entity.DDungeon;
 import com.voltskiya.structure.dungeon.entity.DungeonLookup;
@@ -25,9 +28,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.NamespacedKey;
-import voltskiya.lib.database.VoltskiyaDatabase;
-import voltskiya.lib.database.config.VoltskiyaDatabaseConfig;
-import voltskiya.lib.database.config.VoltskiyaMysqlConfig;
 
 public class DungeonDatabase extends VoltskiyaDatabase {
 
